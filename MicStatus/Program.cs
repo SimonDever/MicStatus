@@ -143,7 +143,7 @@ namespace MicStatus
         {
             if (Muted != muted)
             {
-                Icon.Icon = muted ? Properties.Resources.MicRed : Properties.Resources.MicWhite;
+                Icon.Icon = muted ? Properties.Resources.MicOff : Properties.Resources.MicOn;
                 ToggleMuteMenuItem.Text = muted ? "Unmute" : "Mute";
             }
 
