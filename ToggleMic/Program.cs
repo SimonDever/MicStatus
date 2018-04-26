@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using NAudio.CoreAudioApi;
 
 namespace ToggleMic
@@ -11,9 +12,16 @@ namespace ToggleMic
         [STAThread]
         static void Main()
         {
-            MMDevice audio = new MMDeviceEnumerator().GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
-            if (audio == null)
+
+            MMDevice audio = null;
+            try
+            {
+                audio = new MMDeviceEnumerator().GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
+            }
+            catch (COMException e)
+            {
                 return;
+            }
 
             AudioEndpointVolume volume = audio.AudioEndpointVolume;
             volume.Mute = !volume.Mute;

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -45,10 +46,9 @@ namespace MicStatus
             InitializeKeyboard(true);
             InitializeIcon();
             InitializeAudioDevice();
-
-            Muted = !Volume.Mute;
-            SetMuted(Volume.Mute);
-
+            
+            SetMuted(Volume != null ? Volume.Mute : true);
+            
             Timer = new Timer();
             Timer.Interval = 20000;
             Timer.Enabled = true;
@@ -82,7 +82,7 @@ namespace MicStatus
 
         static void Timer_Tick(object sender, EventArgs e)
         {
-            SetMuted(Volume.Mute);
+            SetMuted(Volume != null ? Volume.Mute : true);
         }
 
         static void InitializeKeyboard(bool firstTime = false)
@@ -118,11 +118,17 @@ namespace MicStatus
         {
             DisposeVolume();
 
-            MMDevice audio = new MMDeviceEnumerator().GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
-            if (audio != null)
+            MMDevice audio = null;
+
+            try
             {
+                audio = new MMDeviceEnumerator().GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
                 Volume = audio.AudioEndpointVolume;
                 Volume.OnVolumeNotification += VolumeUpdated;
+            }
+            catch (COMException e)
+            {
+                // ignore
             }
 
             UpdateDueToVolume();
@@ -130,13 +136,7 @@ namespace MicStatus
 
         static void UpdateDueToVolume()
         {
-            if (Volume == null)
-            {
-                Application.Exit();
-                return;
-            }
-
-            SetMuted(Volume.Mute);
+            SetMuted(Volume != null ? Volume.Mute : true);
         }
 
         static void SetMuted(bool muted)
@@ -201,7 +201,11 @@ namespace MicStatus
                 return;
             }
 
-            Volume.Mute = !Volume.Mute;
+            if (Volume == null)
+                InitializeAudioDevice();
+
+            if (Volume != null)
+                Volume.Mute = !Volume.Mute;
         }
 
         static void QuitClicked(object o, EventArgs e)
